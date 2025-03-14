@@ -1,7 +1,7 @@
 ############################################################################
 #  Codice per automatizzare la ricostruzione dei dati delle camere di LNL  #
 #  autore  : Davide Pagano (davide.pagano@unibs.it)                        #
-#  versione: 1.1 (7 Marzo 2025)                                            #
+#  versione: 1.2 (14 Marzo 2025)                                            #
 ############################################################################
 
 import os
@@ -44,6 +44,12 @@ with open(cartella_sw + "/PattRec/runPR.sh", "w") as f:
     f.write("make \n")
     f.write("./runPR --dataset=${1} --maxevn=${2} \n")
 os.system("chmod +x " + cartella_sw + "/PattRec/runPR.sh")
+
+with open(cartella_sw + "/python-muotom-utils/src/mixer.sh", "w") as f:
+    f.write("#!/bin/bash \n")
+    f.write("cd " + cartella_sw + "/python-muotom-utils/src \n")
+    f.write("./mutomca_mixer_ali --config=${1} \n")
+os.system("chmod +x " + cartella_sw + "/python-muotom-utils/src/mixer.sh")
 ##########################
 ##########################
 ##########################
@@ -182,4 +188,33 @@ print("......fatto")
 print("\n...eseguo runPR su file " + "4_" + data_tag + "_" + str(run_to_process) + " (richiede tempo)")
 process = subprocess.Popen([cartella_sw + "/PattRec/runPR.sh", cartella_dati + "/4_" + data_tag + "_" + str(run_to_process), str(mixer_max_event)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 process.wait()
+print("......fatto")
+
+
+
+print(">>> Creo file di supporto")
+with open(cartella_sw + "/python-muotom-utils/src/configMixer.ini", "w") as f:
+    f.write("[geom] \n")
+    f.write("sl_dt_hdist = 229.0 \n")
+    f.write("sl_dt_vdist = 520.0 \n\n")
+
+    f.write("[IO] \n")
+    f.write("sl0_file = " + cartella_sw + "/PattRec/OUTPUT/3_" + data_tag + "_" + str(run_to_process) + "_tuples.root \n")
+    f.write("sl1_file = " + cartella_sw + "/PattRec/OUTPUT/4_" + data_tag + "_" + str(run_to_process) + "_tuples.root \n")
+    f.write("dt0_file = " + cartella_sw + "/DTFitter/output/DTTtree_" + str(run_to_process) + ".root \n")
+    f.write("dt1_file = " + cartella_sw + "/DTFitter/output/DTTtree_" + str(run_to_process) + ".root \n")
+    f.write("main_file = " + cartella_sw + "/mixed_output/mixed_data_ali_" + str(run_to_process) + ".root \n\n")
+
+    f.write("[main] \n")
+    f.write("write_all_events = true \n")
+
+
+print("\n...eseguo Mixer (richiede tempo)")
+process = subprocess.Popen([cartella_sw + "/python-muotom-utils/src/mixer.sh", "configMixer.ini"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+process.wait()
+#while True: 
+#    line = process.stdout.readline()
+#    if not line and process.poll() is not None:
+#        break
+#    print(line.decode())
 print("......fatto")
